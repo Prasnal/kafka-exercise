@@ -6,13 +6,13 @@ def test_get_urls():
     assert urls == ['https://test.com']
 
 
-def tests_add_to_file():
+def test_add_to_file():
     file_name = 'test_file.txt'
-    text = 'add_line\n'
+    data = ['add_line', 'add_2_lines']
     open(file_name, 'w').close()
-    add_to_file(file_name, text)
+    add_to_file(file_name, data)
 
     with open(file_name) as f:
         content = f.read()
-        assert text.strip() == content.strip()
+        assert 'add_line\nadd_2_lines\n' == content
 

@@ -2,7 +2,7 @@ from kafka import KafkaConsumer
 from json import loads
 from bs4 import BeautifulSoup, SoupStrainer
 from urllib.parse import urljoin
-from typing import Generator
+from typing import Generator, List
 
 
 def get_urls(html: str) -> Generator[str, None, None]:
@@ -11,9 +11,9 @@ def get_urls(html: str) -> Generator[str, None, None]:
             yield link['href']
 
 
-def add_to_file(file_name: str, parsed_url: str) -> None:
+def add_to_file(file_name: str, urls: List[str]) -> None:
     with open(file_name, "a") as file_object:
-        file_object.write(parsed_url+"\n")
+        file_object.write("\n".join(urls) + '\n')
 
 
 def main():
@@ -29,9 +29,8 @@ def main():
     for message in consumer:
         html = message.value['resp']
         base_url = message.value['url']
-        for url in get_urls(html):
-            parsed_url = urljoin(base_url, url)
-            add_to_file('output.txt', parsed_url)
+        parsed_urls = [urljoin(base_url, url) for url in get_urls(html)]
+        add_to_file('output.txt', parsed_urls)
 
 
 if __name__ == "__main__":
