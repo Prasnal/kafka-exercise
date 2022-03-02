@@ -1,0 +1,50 @@
+version: '3.3'
+services:
+  zookeeper-1:
+    image: zookeeper:latest
+    restart: always
+    hostname: zookeeper-1
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_TICK_TIME: 2000
+      ZOO_INIT_LIMIT: 5
+      ZOO_SYNC_LIMIT: 2
+      ZOO_MAX_CLIENT_CNXNS: 60
+      ZOO_4LW_COMMANDS_WHITELIST: "*"
+      ZOO_SERVERS: server.1=zookeeper-1:2888:3888;12181
+    ports:
+      - 12181:2181
+
+  kafka-1:
+    image: wurstmeister/kafka:2.13-2.8.1
+    restart: always
+    ports:
+      - 19092:9092
+    expose:
+      - 9093
+    depends_on:
+      - zookeeper-1
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka-1:9093,OUTSIDE://kafka-1:9092
+    env_file:
+      - ./settings/dev-kafka-topics.env
+      - ./settings/dev-kafka-common.env
+
+  producer:
+    depends_on: [kafka-1, zookeeper-1]
+    build:
+      context: producer
+      dockerfile: Dockerfile
+    environment:
+      TEST: "test"
+
+  consumer:
+    depends_on: [kafka-1, zookeeper-1]
+    build:
+      context: consumer
+      dockerfile: Dockerfile
+    volumes:
+        - ./consumer/:/usr/src/app
+
